@@ -14,19 +14,80 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+abstract class GameObject {
+    protected double x, y;
+    protected Rectangle shape;
+
+    public abstract void update();  
+
+    public double getX() {
+        return x;
+    }
+    public double getY() {
+        return y;
+    }
+    public Rectangle getShape() {
+        return shape;
+    }
+    public void setX(double x) {
+        this.x = x;
+    }
+    public void setY(double y) {
+        this.y = y;
+    }
+}
+
+class Bird extends GameObject {
+    private double velocity;
+    private static final double FLAP_STRENGTH = -10;
+    private static final double GRAVITY = 0.5;
+
+    public Bird(double initialX, double initialY) {
+        this.x = initialX;
+        this.y = initialY;
+        this.velocity = 0;
+        this.shape = new Rectangle(20, 20, Color.YELLOW);
+        this.shape.setX(x);
+        this.shape.setY(y);
+    }
+
+    @Override
+    public void update() {
+        velocity += GRAVITY;
+        y += velocity;
+        shape.setY(y);
+    }
+
+    public void flap() {
+        velocity = FLAP_STRENGTH;
+    }
+}
+
+class Pipe extends GameObject {
+    private static final double PIPE_WIDTH = 50;
+    private static final double PIPE_GAP = 150;
+
+    public Pipe(double x, double gapY) {
+        this.x = x;
+        this.y = gapY;
+        this.shape = new Rectangle(PIPE_WIDTH, gapY, Color.GREEN);
+        this.shape.setX(x);
+    }
+
+    @Override
+    public void update() {
+        x -= 3;
+        shape.setX(x);
+    }
+}
+
 public class FlappyBirdGame extends Application {
     private static final double WIDTH = 600;
     private static final double HEIGHT = 400;
     private static final double BIRD_SIZE = 20;
-    private static final double PIPE_GAP = 150;
-    private static final double PIPE_WIDTH = 50;
-    private static final double GRAVITY = 0.5;
-    private static final double FLAP_STRENGTH = -10;
 
-    private double birdY = HEIGHT / 2;
-    private double birdVelocity = 0;
-    private Rectangle bird;
-    private List<Rectangle> pipes;
+    private Bird bird;
+    private List<Pipe> pipes;
     private Pane pane;
     private Text scoreText, gameOverText, restartText, startText;
     private Timeline gameLoop, pipeSpawner;
@@ -43,10 +104,8 @@ public class FlappyBirdGame extends Application {
         Scene scene = new Scene(pane, WIDTH, HEIGHT);
         scene.setFill(Color.CYAN);
 
-        // Inisialisasi elemen permainan
         initializeGameElements();
 
-        // Event handler untuk tombol
         scene.setOnKeyPressed(event -> {
             if (!gameStarted && event.getCode() == KeyCode.SPACE) {
                 startGame();
@@ -64,19 +123,13 @@ public class FlappyBirdGame extends Application {
 
     private void initializeGameElements() {
         // Reset variabel permainan
-        birdY = HEIGHT / 2;
-        birdVelocity = 0;
+        bird = new Bird(100, HEIGHT/2);
         pipes = new ArrayList<>();
         score = 0;
         gameStarted = false;
 
         // Reset tampilan
         pane.getChildren().clear();
-
-        // Burung
-        bird = new Rectangle(BIRD_SIZE, BIRD_SIZE, Color.YELLOW);
-        bird.setX(100);
-        bird.setY(birdY);
 
         // Teks skor
         scoreText = new Text(10, 20, "Score: 0");
@@ -90,8 +143,7 @@ public class FlappyBirdGame extends Application {
         restartText = new Text(WIDTH / 2 - 100, HEIGHT / 2 + 30, "");
         restartText.setFill(Color.BLACK);
 
-        
-        startText = new Text(WIDTH / 2 - 150, HEIGHT / 2 - 30, "Tekan Spasi untuk Memulai dan terbang");
+        startText = new Text(WIDTH / 2 - 150, HEIGHT / 2 - 30, "Tekan Spasi untuk Memulai dan Terbang");
         startText.setFill(Color.BLACK);
 
         // Tambahkan elemen ke pane
@@ -111,79 +163,62 @@ public class FlappyBirdGame extends Application {
         gameLoop.setCycleCount(Timeline.INDEFINITE);
         gameLoop.play();
 
-        // Loopbuat pipa
+        // Loop buat pipa
         pipeSpawner = new Timeline(new KeyFrame(Duration.seconds(2), e -> spawnPipes()));
         pipeSpawner.setCycleCount(Timeline.INDEFINITE);
         pipeSpawner.play();
     }
 
     private void gameUpdate() {
-    // Update posisi burung
-    birdVelocity += GRAVITY;
-    birdY += birdVelocity;
-    bird.setY(birdY);
-
-    // Cek apakah burung 
-    if (birdY > HEIGHT - BIRD_SIZE || birdY < 0) {
+    bird.update();
+    
+    // Cek burung keluar layar
+    if (bird.getY > HEIGHT - BIRD_SIZE || bird.getY < 0) {
         endGame();
         return;
     }
 
     // Update posisi pipa
-    List<Rectangle> pipesToRemove = new ArrayList<>();
-    for (int i = 0; i < pipes.size(); i += 2) {
-        Rectangle topPipe = pipes.get(i);
-        Rectangle bottomPipe = pipes.get(i + 1);
+    List<Pipe> pipesToRemove = new ArrayList<>();
+    for (Pipe pipe : pipes) {
+        pipe.update();
 
-        topPipe.setX(topPipe.getX() - 3);
-        bottomPipe.setX(bottomPipe.getX() - 3);
-
-        // Tambah skor pas burung melewati pasangan pipa
-        if (topPipe.getX() + PIPE_WIDTH < bird.getX() && topPipe.getUserData() != null && topPipe.getUserData().equals("not_scored")) {
+        // Tambah skor jika burung melewati pipa
+        if (pipe.getX() + 50 < bird.getX() && pipe.getShape().getUserData() == null) {
             score++;
-            topPipe.setUserData("scored"); // Tandai bahwa pipa telah dilewati
-            bottomPipe.setUserData("scored");
+            pipe.getShape().setUserData("scored");
             scoreText.setText("Score: " + score);
         }
 
         // Hapus pipa jika keluar layar
-        if (topPipe.getX() + PIPE_WIDTH < 0) {
-            pipesToRemove.add(topPipe);
-            pipesToRemove.add(bottomPipe);
+        if (pipe.getX() + 50 < 0) {
+            pipesToRemove.add(pipe);
+            }
         }
-    }
 
     pipes.removeAll(pipesToRemove);
     pane.getChildren().removeAll(pipesToRemove);
 
     // Cek tabrakan dengan pipa
-    for (Rectangle pipe : pipes) {
-        if (bird.getBoundsInParent().intersects(pipe.getBoundsInParent())) {
+    for (Pipe pipe : pipes) {
+        if (bird.getShape().getBoundsInParent().intersects(pipe.getShape().pipe.getBoundsInParent())) {
             endGame();
             return;
         }
     }
 }
 
-
     private void spawnPipes() {
         Random random = new Random();
-        double gapY = random.nextInt((int) (HEIGHT - PIPE_GAP));
+        double gapY = random.nextInt((int) (HEIGHT - 150));
 
-        // Pipa atas
-        Rectangle topPipe = new Rectangle(PIPE_WIDTH, gapY, Color.GREEN);
-        topPipe.setX(WIDTH);
-        topPipe.setUserData("not_scored"); // Menandai pipa belum dilewati
-
-        // Pipa bawah
-        Rectangle bottomPipe = new Rectangle(PIPE_WIDTH, HEIGHT - gapY - PIPE_GAP, Color.GREEN);
-        bottomPipe.setX(WIDTH);
-        bottomPipe.setY(gapY + PIPE_GAP);
-        bottomPipe.setUserData("not_scored"); // Menandai pipa belum dilewati
+        Pipe topPipe = new Pipe(WIDTH, gapY);
+        Pipe bottomPipe = new Pipe(WIDTH, HEIGHT - gapY - 150);
+        bottomPipe.getShape().setY(gapY + 150);
 
         pipes.add(topPipe);
         pipes.add(bottomPipe);
-        pane.getChildren().addAll(topPipe, bottomPipe);
+        pane.getChildren().addAll(topPipe.getShape(), bottomPipe.getShape());
     }
 
     private void endGame() {
@@ -197,7 +232,10 @@ public class FlappyBirdGame extends Application {
     }
 
     private void restartGame() {
-        initializeGameElements();
+        try{
+            initializeGameElements();
+        } catch(Exception e){
+            System.out.println("Game gagal dimuat " + e.getMessage());
+        }
     }
 }
-
