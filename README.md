@@ -152,6 +152,7 @@ public class FlappyBirdGame extends Application {
 
         }catch(Exception e){
             System.out.println("Error initializing game elements:"+e.getMessage());
+        }
     }
 
     private void startGame() {
