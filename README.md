@@ -110,7 +110,7 @@ public class FlappyBirdGame extends Application {
             if (!gameStarted && event.getCode() == KeyCode.SPACE) {
                 startGame();
             } else if (gameStarted && event.getCode() == KeyCode.SPACE) {
-                birdVelocity = FLAP_STRENGTH; // Burung terbang ke atas
+                bird.flap();  // Burung terbang ke atas
             } else if (!gameStarted && event.getCode() == KeyCode.TAB) {
                 restartGame();
             }
@@ -147,7 +147,7 @@ public class FlappyBirdGame extends Application {
         startText.setFill(Color.BLACK);
 
         // Tambahkan elemen ke pane
-        pane.getChildren().addAll(bird, scoreText, gameOverText, restartText, startText);
+        pane.getChildren().addAll(bird.getShape(), scoreText, gameOverText, restartText, startText);
     }
 
     private void startGame() {
@@ -171,13 +171,13 @@ public class FlappyBirdGame extends Application {
 
     private void gameUpdate() {
     bird.update();
-    
-    // Cek burung keluar layar
-    if (bird.getY > HEIGHT - BIRD_SIZE || bird.getY < 0) {
+
+    // Cek apakah burung keluar dari layar
+    if (bird.getY() > HEIGHT - BIRD_SIZE || bird.getY() < 0) {
         endGame();
         return;
     }
-
+    
     // Update posisi pipa
     List<Pipe> pipesToRemove = new ArrayList<>();
     for (Pipe pipe : pipes) {
@@ -201,7 +201,7 @@ public class FlappyBirdGame extends Application {
 
     // Cek tabrakan dengan pipa
     for (Pipe pipe : pipes) {
-        if (bird.getShape().getBoundsInParent().intersects(pipe.getShape().pipe.getBoundsInParent())) {
+        if (bird.getShape().getBoundsInParent().intersects(pipe.getShape().getBoundsInParent())) {
             endGame();
             return;
         }
