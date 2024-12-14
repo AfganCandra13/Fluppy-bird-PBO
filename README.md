@@ -128,7 +128,7 @@ public class FlappyBirdGame extends Application {
         pipes = new ArrayList<>();
         score = 0;
         gameStarted = false;
-        }
+        
         // Reset tampilan
         pane.getChildren().clear();
 
