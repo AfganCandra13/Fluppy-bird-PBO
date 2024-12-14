@@ -122,12 +122,13 @@ public class FlappyBirdGame extends Application {
     }
 
     private void initializeGameElements() {
+        try{
         // Reset variabel permainan
         bird = new Bird(100, HEIGHT/2);
         pipes = new ArrayList<>();
         score = 0;
         gameStarted = false;
-
+        }
         // Reset tampilan
         pane.getChildren().clear();
 
@@ -148,6 +149,9 @@ public class FlappyBirdGame extends Application {
 
         // Tambahkan elemen ke pane
         pane.getChildren().addAll(bird.getShape(), scoreText, gameOverText, restartText, startText);
+
+        }catch(Exception e){
+            System.out.println("Error initializing game elements:"+e.getMessage());
     }
 
     private void startGame() {
