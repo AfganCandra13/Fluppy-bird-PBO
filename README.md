@@ -244,3 +244,19 @@ public class FlappyBirdGame extends Application {
         }
     }
 }
+
+// code flowchart menggunakan mermaid.live
+flowchart TD
+    A[Start] --> B["main(args: String[])"]
+    B --> C["start(primaryStage: Stage)"]
+    C --> D["initializeGameElements()"]
+    D --> E["startGame()"]
+    E --> F{Game Loop}
+    F -->|Update| G["Bird.update()"]
+    F -->|Update| H["Pipe.update()"]
+    F --> I{Game Over?}
+    I -->|Yes| J["endGame()"]
+    J --> K["restartGame()"]
+    I -->|No| F
+    K --> E
+    J --> L[End]
